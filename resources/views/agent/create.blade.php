@@ -85,51 +85,72 @@
                     <td>{{ $ticket->priority }}</td>
 
                     <td>{{ $ticket->category }}</td>
+             <td>
 
-                     
-                    <!-- <td>
+    @if($ticket->status == 'closed' || $ticket->status == 'resolved')
+
+        <span style="color: gray;">
+            Closed
+        </span>
+
+    @elseif($ticket->sla_deadline && $ticket->sla_deadline->isPast())
+
+        <span style="color: red; font-weight: bold;">
+             OVERDUE
+        </span>
+
+    @elseif($ticket->sla_deadline && now()->diffInHours($ticket->sla_deadline) <= 1)
+
+        <span style="color: orange; font-weight: bold;">
+             Breaching Soon!
+        </span>
+
+    @else
+
+        <span style="color: green;">
+             Within SLA
+        </span>
+
+    @endif
+
+</td>
+
+<td>
+
+    {{ $ticket->sla_deadline
+        ? $ticket->sla_deadline->format('d M Y, h:i A')
+        : 'No Deadline'
+    }}
+
+</td>
+
+
+
+
+
+                    <td>
                         <form action="{{ route('agent.status.update', $ticket->id) }}" method="POST">
                             @csrf
 
-                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <select
+                                name="status"
+                                class="form-select form-select-sm"
+                                onchange="this.form.submit()">
 
-
-
-                                <option value="resolved" {{ $ticket->status == 'resolved' ? 'selected' : '' }}>
-                                    Resolved
+                                <option value="in_progress"
+                                    {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>
+                                    In Progress
                                 </option>
 
-                                <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>
+                                <option value="closed"
+                                    {{ $ticket->status == 'closed' ? 'selected' : '' }}>
                                     Closed
                                 </option>
 
                             </select>
-
                         </form>
-                    </td>  -->
-                    <td>
-    <form action="{{ route('agent.status.update', $ticket->id) }}" method="POST">
-        @csrf
+                    </td>
 
-        <select
-            name="status"
-            class="form-select form-select-sm"
-            onchange="this.form.submit()">
-
-            <option value="in_progress"
-                {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>
-                In Progress
-            </option>
-
-            <option value="closed"
-                {{ $ticket->status == 'closed' ? 'selected' : '' }}>
-                Closed
-            </option>
-
-        </select>
-    </form>
-</td>
-                    
                     <td>
                         <form action="{{route('addComments',$ticket->id)}}" method="post">
                             @csrf

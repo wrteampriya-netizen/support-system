@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
-    //
+    
     protected $userservice;
 
 
@@ -56,5 +56,13 @@ class LoginController extends Controller
 
 
 
+    }
+    public function logout(Request $request){
+        auth()->logout();
+       return redirect('/login');
+
+    }
+    public function homepage(){
+        return view('/homepage');
     }
 }

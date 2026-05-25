@@ -15,8 +15,11 @@ class ticket extends Model
         'category',
         'status',
         'attachment', 
-        'customer_id'
+        'customer_id',
+        'sla_deadline'
+    
     ];
+    protected $casts = ['sla_deadline'=>'datetime','is_warned'=>'boolean'];
 
     public function agent()
 {

@@ -95,6 +95,14 @@
             margin-left: auto;
         }
 
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
         @media(max-width: 768px) {
 
             .main-content {
@@ -116,33 +124,62 @@
             <h4 class="brand-logo ms-2">SupportDesk</h4>
         </div>
 
-        <div class="ms-auto">
+        <div class="ms-auto d-flex align-items-center gap-3">
 
-            @if(auth()->check())
+    @if(auth()->check())
 
-            <button class="btn btn-light d-flex align-items-center gap-2">
+        
+        <div class="bg-white text-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm">
 
-                <i class="bi bi-person-circle"></i>
+            <i class="bi bi-person-circle fs-5 text-primary"></i>
 
-                <span>
-                    {{ auth()->user()->name ?? auth()->user()->email }}
+            <span class="fw-semibold">
+                {{ auth()->user()->name ?? auth()->user()->email }}
+            </span>
+
+        </div>
+
+        
+        <form method="POST"
+            action="{{ route('logout') }}"
+            id="logoutForm"
+            class="m-0">
+
+            @csrf
+
+            <button type="submit"
+                class="btn btn-danger rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm border-0">
+
+                <i class="bi bi-box-arrow-right"></i>
+
+                <span class="fw-semibold">
+                    Logout
                 </span>
 
             </button>
 
-            @endif
+        </form>
 
-        </div>
+    @endif
+
+</div>
 
     </div>
 
 
     <div class="sidebar" id="sidebar">
         <ul class="nav flex-column">
-           
+
             @can('assign-tickets')
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
+            </li>
+
+            
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('team.showform') }}">
+
+                    <i class="bi bi-ticket-detailed"></i> admin Tickets</a>
             </li>
 
 
@@ -233,8 +270,8 @@
                 </a>
             </li>
 
-             @can('reassign-team-tickets')
-              <li class="nav-item">
+            @can('reassign-team-tickets')
+            <li class="nav-item">
                 <a class="nav-link" href="{{ route('leader.tickets') }}">
                     Team Leader Tickets
                 </a>
@@ -243,9 +280,9 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('leader.myteam') }}">
                     Team Member
-                </a> 
+                </a>
             </li>
-              @endcan
+            @endcan
 
 
         </ul>

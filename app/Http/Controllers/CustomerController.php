@@ -1,9 +1,5 @@
 <?php
 
-
-
-
-
 namespace App\Http\Controllers;
 
 use App\Mail\ticketCreatedMail;
@@ -28,10 +24,21 @@ class CustomerController extends Controller
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
+
         if($request->hasFile('attachment')){
             $validate['attachment'] = $request->file('attachment')
             ->store('attachment','public');
         }
+
+        $hours=match($request->priority){
+            'Critical' => 2,
+            'High' => 8,
+            'Medium' =>  24,
+            'Low' => 72,
+            default => 72,
+        };
+
+        $validate['sla_deadline'] = now()->addHours($hours);
 
         $validate['customer_id'] = auth()->id();
 

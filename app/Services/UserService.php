@@ -41,7 +41,7 @@ class UserService
     }
     public function login(array $data)
     {
-        $role=($data['email']=== 'sita@gmail.com') ? 'admin':'user';
+       
 
         $credentials = [
             'email' => $data['email'],
@@ -52,7 +52,26 @@ class UserService
         if (Auth::attempt($credentials,$remember)) {
             request()->session()->regenerate();
             session(['user_id'=>auth::user()->id]);
-            return redirect('/homepage');
+
+            $user=User::find(Auth::id());
+            if($user->hasRole('Super Admin')){
+                return redirect()->route('admin.dashboard');
+            }
+            elseif($user->hasRole('Admin')){
+                 return redirect()->route('team.showform');
+
+            }
+            elseif($user->hasRole('Team Leader')){
+                return redirect()->route('leader.tickets');
+
+            }elseif($user->hasRole('Support Agent')){
+                return redirect()->route('agent.showpage');
+
+            }else{
+                return redirect()->route('customer.datalist');
+            }
+
+            
         }
 
 

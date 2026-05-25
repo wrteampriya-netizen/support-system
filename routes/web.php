@@ -190,6 +190,9 @@ Route::post('/signup', [SignupController::class, 'store'])->name('signup.store')
 Route::get('/login', [LoginController::class, 'index'])->name('login.form');
 Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 
+
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
 /*
 |--------------------------------------------------------------------------
 | Password Reset
@@ -208,7 +211,7 @@ Route::post('/reset-password', [LoginController::class, 'update_password'])->nam
 | home page
 |--------------------------------------------------------------------------
 */
-Route::get('/homepage', [TikectController::class, 'index'])->name('homepage');
+ Route::get('/homepage', [LoginController::class, 'homepage'])->name('homepage');
 
 /*
 |--------------------------------------------------------------------------

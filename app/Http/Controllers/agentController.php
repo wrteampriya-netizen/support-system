@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -18,18 +16,17 @@ class agentController extends Controller
     {
         $agent_id = Auth::id();
 
-        
+
 
         $tickets = DB::table('tickets')
             ->where('agent_id', $agent_id)
 
-            
+
             ->where('status', 'open')
             ->get();
 
-        
-        $acceptedTickets = DB::table('tickets')
-            ->where('agent_id', $agent_id)
+
+        $acceptedTickets = ticket::where('agent_id', $agent_id)
             ->whereIn('status', [
                 'in_progress',
                 'pending',
@@ -46,7 +43,7 @@ class agentController extends Controller
         );
     }
 
-   
+
 
     public function accept($id)
     {
@@ -54,7 +51,7 @@ class agentController extends Controller
             ->where('id', $id)
             ->update([
 
-                
+
                 'status' => 'in_progress',
 
                 'updated_at' => now()
@@ -64,7 +61,7 @@ class agentController extends Controller
             ->with('success', 'Ticket accepted');
     }
 
-    
+
 
     public function reject($id)
     {
@@ -72,7 +69,7 @@ class agentController extends Controller
             ->where('id', $id)
             ->update([
 
-                
+
                 'agent_id' => null,
 
                 'status' => 'open',
@@ -84,7 +81,7 @@ class agentController extends Controller
             ->with('success', 'Ticket rejected');
     }
 
-    
+
 
     public function chat($customer_id)
     {
@@ -94,7 +91,7 @@ class agentController extends Controller
         );
     }
 
-    
+
 
     public function addComment(Request  $request, $id)
     {
@@ -111,7 +108,7 @@ class agentController extends Controller
             $ticket->comments = $comment;
         }
 
-        
+
 
         if ($ticket->status == 'pending') {
 
@@ -123,7 +120,7 @@ class agentController extends Controller
         return redirect()->back();
     }
 
-   
+
 
     public function getcomment()
     {
@@ -138,7 +135,7 @@ class agentController extends Controller
         );
     }
 
-  
+
 
     public function pending($id)
     {
@@ -146,7 +143,7 @@ class agentController extends Controller
             ->where('id', $id)
             ->update([
 
-                
+
                 'status' => 'pending',
 
                 'updated_at' => now()
@@ -156,7 +153,7 @@ class agentController extends Controller
             ->with('success', 'Waiting for customer reply');
     }
 
-    
+
 
     public function resolve($id)
     {
@@ -164,7 +161,7 @@ class agentController extends Controller
             ->where('id', $id)
             ->update([
 
-                
+
                 'status' => 'resolved',
 
                 'updated_at' => now()
@@ -174,7 +171,7 @@ class agentController extends Controller
             ->with('success', 'Ticket resolved');
     }
 
-   
+
 
     public function close($id)
     {
