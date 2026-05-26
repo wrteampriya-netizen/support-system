@@ -1,76 +1,35 @@
 @extends('navbar')
 @section('title','agent')
 @section('content')
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"> -->
 
-    <title>Team Leader Notification</title>
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script> -->
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-
-</head>
 
 <body>
-
     <div class="container mt-3">
-
-        <div class="alert alert-warning">
-
-            <div class="d-flex justify-content-between align-items-center">
-
-                <div>
-                    <i class="bi bi-bell"></i>
-                    {{ count($tickets) }}
-                </div>
-
-            </div>
-
-            <ul class="list-group mt-3">
-
-                @foreach ($tickets as $ticket)
-
-                <li class="list-group-item d-flex justify-content-between">
-
-                    <span>{{ $ticket->subject }}</span>
-
-                    <div class="d-flex gap-2">
-
-                        <a href="{{ route('agent.accept', $ticket->id) }}"
-                            class="text-success">
-
-                            <i class="bi bi-plus-lg"></i>
-
-                        </a>
-
-                        <a href="{{ route('agent.reject', $ticket->id) }}"
-                            class="text-danger">
-
-                            <i class="bi bi-x-lg"></i>
-
-                        </a>
-
-                    </div>
-
-                </li>
-
-                @endforeach
-
-            </ul>
-
-        </div>
-
-
         <table class="table table-bordered">
+
+            <th data-field="id">ID</th>
+            <th data-field="subject">Subject</th>
+            <th data-field="description">Description</th>
+            <th data-field="priority">Priority</th>
+            <th data-field="category">Category</th>
+            <th> Warnning</th>
+            <th data-field="sla_deadline"> Deadline</th>
+            <th>Response Time</th>
+            <th> notes</th>
+            <th data-field="status"> status</th>
+            <th>Attachments</th>
+            <th>action</th>
+            <th>Meassage</th>
+
             <tbody>
                 @foreach($acceptedTickets as $ticket)
 
@@ -85,48 +44,47 @@
                     <td>{{ $ticket->priority }}</td>
 
                     <td>{{ $ticket->category }}</td>
-             <td>
+                    <td>
 
-    @if($ticket->status == 'closed' || $ticket->status == 'resolved')
+                        @if($ticket->status == 'closed' || $ticket->status == 'resolved')
 
-        <span style="color: gray;">
-            Closed
-        </span>
+                        <span style="color: gray;">
+                            Closed
+                        </span>
 
-    @elseif($ticket->sla_deadline && $ticket->sla_deadline->isPast())
+                        @elseif($ticket->sla_deadline && $ticket->sla_deadline->isPast())
 
-        <span style="color: red; font-weight: bold;">
-             OVERDUE
-        </span>
+                        <span style="color: red; font-weight: bold;">
+                            OVERDUE
+                        </span>
 
-    @elseif($ticket->sla_deadline && now()->diffInHours($ticket->sla_deadline) <= 1)
+                        @elseif($ticket->sla_deadline && now()->diffInHours($ticket->sla_deadline) <= 1)
 
-        <span style="color: orange; font-weight: bold;">
-             Breaching Soon!
-        </span>
+                            <span style="color: orange; font-weight: bold;">
+                            Breaching Soon!
+                            </span>
 
-    @else
+                            @else
 
-        <span style="color: green;">
-             Within SLA
-        </span>
+                            <span style="color: green;">
+                                Within SLA
+                            </span>
 
-    @endif
+                            @endif
 
-</td>
+                    </td>
 
-<td>
+                    <td>
 
-    {{ $ticket->sla_deadline
+                        {{ $ticket->sla_deadline
         ? $ticket->sla_deadline->format('d M Y, h:i A')
         : 'No Deadline'
     }}
 
-</td>
-
-
-
-
+                    </td>
+                    <td>
+                        {{ $ticket->created_at->diffForHumans() }}
+                    </td>
 
                     <td>
                         <form action="{{ route('agent.status.update', $ticket->id) }}" method="POST">

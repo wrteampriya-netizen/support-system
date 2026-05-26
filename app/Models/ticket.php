@@ -28,7 +28,10 @@ class ticket extends Model
 public function tickets(){
     return $this->hasMany(ticket::class,'assign_to');
 }
-public function assign(){
-   return $this->belongsTo(User::class,'assign_to');
+
+
+public function assign()
+{
+    return $this->belongsTo(User::class, 'assign_to');
 }
 }

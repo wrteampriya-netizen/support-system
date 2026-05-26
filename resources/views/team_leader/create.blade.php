@@ -4,52 +4,7 @@
 
 <div class="container mt-3">
 
-    <div class="alert alert-warning">
-
-        <div class="d-flex justify-content-between align-items-center">
-
-            <div>
-                <i class="bi bi-bell"></i>
-                {{ count($tickets) }}
-            </div>
-
-        </div>
-
-        <ul class="list-group mt-3">
-
-            @foreach ($tickets as $ticket)
-
-            <li class="list-group-item d-flex justify-content-between">
-
-                <span>{{ $ticket->subject }}</span>
-
-                <div class="d-flex gap-2">
-
-
-                    <a href="{{ route('ticket.accept', $ticket->id) }}"
-                        class="text-success">
-
-                        <i class="bi bi-check-lg"></i>
-
-                    </a>
-
-
-                    <a href="{{ route('ticket.reject', $ticket->id) }}"
-                        class="text-danger">
-
-                        <i class="bi bi-x-lg"></i>
-
-                    </a>
-
-                </div>
-
-            </li>
-
-            @endforeach
-
-        </ul>
-
-    </div>
+    
 
     <button id="openAssignModal"
         class="btn btn-success mb-3">

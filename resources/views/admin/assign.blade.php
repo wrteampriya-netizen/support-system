@@ -1,74 +1,24 @@
 @extends('navbar')
-@section('title','agent')
+@section('title','admin')
 @section('content')
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-    <title>Assign Tickets</title>
 
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/bootstrap-table.min.css">
+
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/bootstrap-table.min.css">
 
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
 
-</head>
+
 
 <body class="p-4">
-    @if(isset($newTickets) && count($newTickets) > 0)
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-
-
-        <strong>New Tickets:</strong> You have {{ count($newTickets) }} unassigned ticket(s).
-
-
-        <ul class="list-group mt-2">
-            @foreach ($newTickets as $nt)
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-
-                <span>{{ $nt->subject }}</span>
-
-                <div class="d-flex gap-2">
-
-
-                    <a href="{{ route('admin.ticket.accept', $nt->id) }}" class="btn btn-sm btn-success">
-                        <i class="bi bi-plus-lg"></i>
-                    </a>
-
-
-
-
-                    <form action="/ticket/{{ $nt->id }}" method="POST">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this?')">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </form>
-                </div>
-
-            </li>
-            @endforeach
-        </ul>
-
-
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-
-    </div>
-    @endif
-
-
-
-
-
+   
     <button id="openAssignModal" class="btn btn-success mb-3">
         Assign Leader
     </button>
@@ -99,7 +49,7 @@
 
     <table id="table"
         data-toggle="table"
-        data-url="{{ route('admin.fetch') }}" 
+        data-url="{{ route('admin.fetch') }}"
         data-side-pagination="server"
         data-pagination="true"
         data-search="true"
@@ -108,6 +58,7 @@
 
         <thead>
             <tr>
+
 
                 <th
                     data-field="state"
@@ -120,8 +71,9 @@
                 <th data-field="priority">Priority</th>
                 <th data-field="category">Category</th>
                 <th data-field="status" data-formatter="statusFormatter">Status</th>
-               
-<th data-field="leader_name">Assign_To</th>
+                <th data-field="assign" data-formatter="assignFormatter">
+                    Assign To
+                </th>
 
 
 
@@ -131,6 +83,7 @@
                     data-formatter="imageFormatter">
                     Attachment
                 </th>
+
 
                 <th
                     data-formatter="actionFormatter">
@@ -213,18 +166,15 @@
 
     </div>
 
-   
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-   
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.27.3/dist/bootstrap-table.min.js"></script>
 
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
     <script>
-      
-
         function queryParams(params) {
 
             params.status = $('#statusFilter').val();
@@ -286,6 +236,10 @@
             
                
             `;
+        }
+
+        function assignFormatter(value, row) {
+            return row.assign ? row.assign.name : 'Not Assigned';
         }
 
 

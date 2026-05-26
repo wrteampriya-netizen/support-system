@@ -1,3 +1,11 @@
+@php
+
+$notificationService = app(\App\Services\notifications::class);
+
+$unread = $notificationService->unreadCount();
+
+$notifications = $notificationService->latestNotifications();
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -103,6 +111,10 @@
             transform: translateY(-2px);
         }
 
+        .dropdown-menu {
+            z-index: 9999 !important;
+        }
+
         @media(max-width: 768px) {
 
             .main-content {
@@ -126,149 +138,277 @@
 
         <div class="ms-auto d-flex align-items-center gap-3">
 
-    @if(auth()->check())
+            @if(auth()->check())
 
-        
-        <div class="bg-white text-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm">
 
-            <i class="bi bi-person-circle fs-5 text-primary"></i>
+            <div class="bg-white text-dark rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm">
 
-            <span class="fw-semibold">
-                {{ auth()->user()->name ?? auth()->user()->email }}
-            </span>
-
-        </div>
-
-        
-        <form method="POST"
-            action="{{ route('logout') }}"
-            id="logoutForm"
-            class="m-0">
-
-            @csrf
-
-            <button type="submit"
-                class="btn btn-danger rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm border-0">
-
-                <i class="bi bi-box-arrow-right"></i>
+                <i class="bi bi-person-circle fs-5 text-primary"></i>
 
                 <span class="fw-semibold">
-                    Logout
+                    {{ auth()->user()->name ?? auth()->user()->email }}
                 </span>
 
-            </button>
+            </div>
 
-        </form>
 
-    @endif
+            <form method="POST"
+                action="{{ route('logout') }}"
+                id="logoutForm"
+                class="m-0">
+
+                @csrf
+
+                <button type="submit"
+                    class="btn btn-danger rounded-pill px-3 py-2 d-flex align-items-center gap-2 shadow-sm border-0">
+
+                    <i class="bi bi-box-arrow-right"></i>
+
+                    <span class="fw-semibold">
+                        Logout
+                    </span>
+
+                </button>
+
+            </form>
+
+                <div class="dropdown">
+
+    <button class="btn p-0 position-relative text-white dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+
+        <i class="bi bi-bell fs-4"></i>
+
+        @if($unread > 0)
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ $unread }}
+            </span>
+        @endif
+
+    </button>
+
+    <ul class="dropdown-menu dropdown-menu-end shadow"
+        style="width:300px; max-height:400px; overflow:auto; z-index:2000;">
+
+        <li class="dropdown-header fw-bold">
+            Notifications
+        </li>
+
+        @forelse($notifications as $note)
+
+            <li class="border-bottom py-2 px-2">
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <div>
+                        <small class="fw-bold">{{ $note->title }}</small><br>
+                        <small class="text-muted">{{ $note->description }}</small>
+                    </div>
+
+                    
+                    <a href="{{ route('notification.open', $note->id) }}">
+                        <i class="bi bi-plus-circle text-success fs-5"></i>
+                    </a>
+
+                </div>
+            </li>
+
+        @empty
+            <li class="text-center text-muted py-2">
+                No Notifications
+            </li>
+        @endforelse
+
+    </ul>
 
 </div>
 
-    </div>
+
+        </div>
+
+        @endif
+
+</div>
 
 
     <div class="sidebar" id="sidebar">
-        <ul class="nav flex-column">
 
-            @can('assign-tickets')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard</a>
-            </li>
+    <ul class="nav flex-column">
 
-            
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('team.showform') }}">
+        {{-- ========================================= --}}
+        {{-- SUPER ADMIN --}}
+        {{-- ========================================= --}}
+        @role('Super Admin')
 
-                    <i class="bi bi-ticket-detailed"></i> admin Tickets</a>
-            </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('role.data') }}">
+                <i class="bi bi-people"></i>
+                Manage Users
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('role.show') }}">
+                <i class="bi bi-plus-square"></i>
+                Create Role
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('role.index') }}">
+                <i class="bi bi-shield-lock"></i>
+                Roles & Permissions
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('team.create') }}">
+                <i class="bi bi-diagram-3"></i>
+                Create Team
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('customer.showindex') }}">
+                <i class="bi bi-ticket-detailed"></i>
+                All Tickets
+            </a>
+        </li>
+
+       
+
+        @endrole
 
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('team.showform') }}">
 
-                    <i class="bi bi-ticket-detailed"></i>Tickets</a>
-            </li>
-            @endcan
-            @can('manage-users')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('role.show') }}">
-                    Role create
-                </a>
-            </li>
+        {{-- ========================================= --}}
+        {{-- ADMIN --}}
+        {{-- ========================================= --}}
+        @role('Admin')
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('role.index') }}">
-                    Role
-                </a>
-            </li>
-            @endcan
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+        </li>
 
-            @can('manage-permissions')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('permission.show') }}">
-                    Permission Add
-                </a>
-            </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('team.create') }}">
+                <i class="bi bi-diagram-3"></i>
+                Manage Teams
+            </a>
+        </li>
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('permission.index') }}">
-                    Permission Index
-                </a>
-            </li>
-            @endcan
-            @can('manage-teams')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('team.create') }}">
-                    Create Team
-                </a>
-            </li>
-            @endcan
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('team.showform') }}">
+                <i class="bi bi-person-check"></i>
+                Assign Tickets
+            </a>
+        </li>
 
-            @can('view-all-tickets')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('customer.showindex') }}">
-                    <i class="bi bi-ticket-detailed"></i>
-                    Tickets
-                </a>
-            </li>
-            @endcan
-            @can('view-assigned-tickets')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('agent.showpage') }}">
-                    Agent Tickets
-                </a>
-            </li>
-            @endcan
+       
 
-            @can('add-comments')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('Comments.list') }}">
-                    Comments
-                </a>
-            </li>
-            @endcan
+        @endrole
 
-            @can('create-tickets')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('customer.create') }}">
-                    Create Ticket
-                </a>
-            </li>
-            @endcan
 
-            @can('view-own-tickets')
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('customer.datalist') }}">
-                    Tickets
-                </a>
-            </li>
-            @endcan
 
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('chat.test') }}">
-                    Chat
-                </a>
-            </li>
+        {{-- ========================================= --}}
+        {{-- TEAM LEADER --}}
+        {{-- ========================================= --}}
+        @role('Team Leader')
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('leader.tickets') }}">
+                <i class="bi bi-ticket-detailed"></i>
+                Team Tickets
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('leader.myteam') }}">
+                <i class="bi bi-people-fill"></i>
+                Team Members
+            </a>
+        </li>
+
+       
+
+        @endrole
+
+
+
+        {{-- ========================================= --}}
+        {{-- SUPPORT AGENT --}}
+        {{-- ========================================= --}}
+        @role('Support Agent')
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('agent.showpage') }}">
+                <i class="bi bi-ticket"></i>
+                Assigned Tickets
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('Comments.list') }}">
+                <i class="bi bi-chat-left-text"></i>
+                Comments
+            </a>
+        </li>
+
+        @endrole
+
+
+
+        {{-- ========================================= --}}
+        {{-- CUSTOMER --}}
+        {{-- ========================================= --}}
+        @role('Customer')
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('customer.create') }}">
+                <i class="bi bi-plus-circle"></i>
+                Create Ticket
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('customer.datalist') }}">
+                <i class="bi bi-ticket-detailed"></i>
+                My Tickets
+            </a>
+        </li>
+
+        @endrole
+
+
+
+        {{-- ========================================= --}}
+        {{-- COMMON FOR ALL LOGGED USERS --}}
+        {{-- ========================================= --}}
+        @auth
+
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('chat.test') }}">
+                <i class="bi bi-chat-dots"></i>
+                Chat
+            </a>
+        </li>
+
+        @endauth
+
+    </ul>
+
+</div>
 
             @can('reassign-team-tickets')
             <li class="nav-item">

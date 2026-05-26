@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\team;
 use App\Models\User;
 use App\Models\ticket;
+use App\Models\notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ticketAssignMail;
@@ -120,7 +121,7 @@ class TeamCreateCntroller extends Controller
             ->where('id', $id)
             ->update([
 
-                // TEAM LEADER ACCEPTS TICKET
+                
                 'assign_to' => auth()->id(),
 
                 'updated_at' => now()
@@ -166,6 +167,16 @@ class TeamCreateCntroller extends Controller
                 ->where('id', $ticket)
                 ->first();
 
+            notification::create([
+                
+                'user_id' => $leader_id,
+                'title'=>$ticketdetail->subject,
+                'description'  =>$ticketdetail->description,
+                'tickets_id'=>$ticket,
+                'is_read'=>0
+
+            ]);
+
             Mail::to($leader->email)
                 ->send(new ticketAssignMail($ticketdetail));
         }
@@ -204,43 +215,78 @@ class TeamCreateCntroller extends Controller
     }
 
 
-    public function index(Request $request)
-    {
-        $query = ticket::query();
+    // public function index(Request $request)
+    // {
+    //     // $query = ticket::query();
+    //     $query=ticket::with('assign');
 
-        $query->whereNotNull('assign_to');
+       
 
-        if ($request->search) {
+    //     if ($request->search) {
 
-            $query->where(function ($q) use ($request) {
+    //         $query->where(function ($q) use ($request) {
 
-                $q->where('subject', 'like', '%' . $request->search . '%')
-                    ->orWhere('description', 'like', '%' . $request->search . '%');
-            });
-        }
+    //             $q->where('subject', 'like', '%' . $request->search . '%')
+    //                 ->orWhere('description', 'like', '%' . $request->search . '%');
+    //         });
+    //     }
 
-        if ($request->status) {
 
-            $query->where('status', $request->status);
-        }
 
-        $limit = $request->limit ?? 10;
+    //     if ($request->status) {
 
-        $offset = $request->offset ?? 0;
+    //         $query->where('status', $request->status);
+    //     }
+    //     $query->orderBy('created_at','desc');
 
-        $total = $query->count();
+    //     $limit = $request->limit ?? 10;
 
-        $rows = $query
-            ->offset($offset)
-            ->limit($limit)
-            ->get();
+    //     $offset = $request->offset ?? 0;
 
-        return response()->json([
-            'total' => $total,
-            'rows' => $rows
-        ]);
+    //     $total = $query->count();
+
+    //     $rows = $query
+    //         ->offset($offset)
+    //         ->limit($limit)
+    //         ->get();
+           
+
+    //     return response()->json([
+    //         'total' => $total,
+    //         'rows' => $rows
+    //     ]);
+    // }
+public function index(Request $request)
+{
+   $query = ticket::with('assign');
+
+    if ($request->search) {
+        $query->where(function ($q) use ($request) {
+            $q->where('subject', 'like', '%' . $request->search . '%')
+              ->orWhere('description', 'like', '%' . $request->search . '%');
+        });
     }
 
+    if ($request->status) {
+        $query->where('status', $request->status);
+    }
+
+    $query->orderBy('created_at', 'desc');
+
+    $limit = $request->limit ?? 10;
+    $offset = $request->offset ?? 0;
+
+    $total = $query->count();
+
+    $rows = $query->offset($offset)
+                  ->limit($limit)
+                  ->get();
+
+    return response()->json([
+        'total' => $total,
+        'rows' => $rows
+    ]);
+}
 
     public function update_status(Request $request, $id)
     {
@@ -273,6 +319,9 @@ class TeamCreateCntroller extends Controller
 
         $resolvedTicketsCount = ticket::where('status', 'resolved')->count();
 
+        $salbreachTickets=ticket::where('status','!=','closed')->where('sla_deadline','<',now())->count();
+        
+
         return view(
             'admin.Dashboard',
             compact(
@@ -281,7 +330,8 @@ class TeamCreateCntroller extends Controller
                 'closeTicketsCount',
                 'pendingTicketsCount',
                 'progressTicketsCount',
-                'resolvedTicketsCount'
+                'resolvedTicketsCount',
+                'salbreachTickets'
             )
         );
     }

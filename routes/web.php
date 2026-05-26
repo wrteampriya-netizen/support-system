@@ -17,7 +17,26 @@ use App\Http\Controllers\agentController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChattestController;
 use App\Http\Controllers\messageController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
+
+
+// Route::get('/email/verify', function () {
+//     return view('verify-email');
+// })->middleware('auth')->name('verification.notice');
+
+// Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+//     $request->fulfill(); 
+    
+    
+//     return redirect()->route('customer.create'); 
+// })->middleware(['auth', 'signed'])->name('verification.verify');
+
+
+// Route::post('/email/verification-notification', function (Request $request) {
+//     $request->user()->sendEmailVerificationNotification();
+//     return back()->with('message', 'Verification link sent!');
+// })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 
 /*
@@ -84,7 +103,7 @@ Route::get('/ticket/assign',[Team_leaderController::class,'showform'])->name('ti
 
 //customer
 
-Route::get('/customer/create',[CustomerController::class,'showTickets'])->name('customer.create');
+Route::get('/customer/create',[CustomerController::class,'showTickets'])->name('customer.create')->middleware(['auth', 'verified']);
 
 Route::post('/customer/create',[CustomerController::class,'store'])->name('customer.store');
 
@@ -124,9 +143,10 @@ Route::post('/admin/tickets/{id}/status', [TeamCreateCntroller::class, 'update_s
 Route::get('/admin/tickets/{id}/accept', [TeamCreateCntroller::class, 'acceptTicket'])->name('admin.ticket.accept');
 
 Route::delete('/ticket/{id}', [TeamCreateCntroller::class, 'deleteTicket'])->name('ticket.delete');
-Route::get('/admin/dashboard',[TeamCreateCntroller::class,'ticketCount'])->name('admin.dashboard');
+Route::get('/admin/dashboard',[TeamCreateCntroller::class,'ticketCount'])->name('admin.dashboard')->middleware(['auth', 'verified']);
 
 //team leader
+Route::get('/notification/open/{id}', [Team_leaderController::class, 'openNotification'])->name('notification.open');
 
 Route::get('/teamLeader/assign',[Team_leaderController::class,'index'])->name('teamLeader.showpage');
 
@@ -147,6 +167,7 @@ Route::get('/all-team-data',[Team_leaderController::class,'allTeam'])->name('all
 Route::post('/leader/tickets/{id}/status', [Team_leaderController::class, 'updateStatus'])->name('leader.status.update');
 
 Route::delete('/ticket/delete/{id}', [TeamCreateCntroller::class, 'deleteTicket'])->name('ticket_leader.delete');
+
 //agent
 
 Route::get('/agent/assign',[agentController::class,'index'])->name('agent.showpage');

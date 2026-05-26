@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Mail\ticketCreatedMail;
 use Illuminate\Http\Request;
 use App\Models\ticket;
+use App\Models\User;
+use App\Models\Category;
+use App\Models\notification;
 use Illuminate\Support\Facades\Mail;
 
 class CustomerController extends Controller
 {
     //
     public function showTickets(){
-        return  view('customer.create');
+        $categories=Category::all();
+        
+        return  view('customer.create',compact('categories'));
     }
 
     public function store(Request $request){
@@ -50,6 +55,21 @@ class CustomerController extends Controller
 
         $ticket = ticket::create($validate);
 
+        $admins=User::role('admin')->get();
+
+        foreach($admins as $admin){
+            notification::create([
+                'user_id' => $admin->id,
+                'title'=>$ticket->subject,
+                'description'=>$ticket->subject,
+                'tickets_id' => $ticket->id,
+                'is_read' => 0,
+            ]);
+        }
+
+       
+
+
         Mail::to(auth()->user()->email)
         ->send(new ticketCreatedMail($ticket));
 
@@ -80,10 +100,11 @@ class CustomerController extends Controller
     }
 
     public function edit($id){
+         $categories=Category::all();
 
         $data = ticket::findOrFail($id);
 
-        return view('customer.edit',compact('data'));
+        return view('customer.edit',compact('data','categories'));
     }
 
     public function update(Request $request,$id){
@@ -143,4 +164,5 @@ class CustomerController extends Controller
         return redirect()->route('customer.showindex')
         ->with('success','delete data');
     }
+
 }

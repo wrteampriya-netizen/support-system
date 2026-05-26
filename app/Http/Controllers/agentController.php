@@ -30,6 +30,7 @@ class agentController extends Controller
             ->whereIn('status', [
                 'in_progress',
                 'pending',
+                'closed',
                 'resolved'
             ])
             ->get();
@@ -42,9 +43,6 @@ class agentController extends Controller
             )
         );
     }
-
-
-
     public function accept($id)
     {
         DB::table('tickets')
@@ -59,6 +57,15 @@ class agentController extends Controller
 
         return redirect()->back()
             ->with('success', 'Ticket accepted');
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        ticket::where('id', $id)->update([
+            'status' => $request->status
+        ]);
+        return redirect()->back()
+            ->with('success', 'Ticket updated');
     }
 
 

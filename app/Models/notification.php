@@ -14,4 +14,12 @@ class notification extends Model
         'tickets_id',
         'is_read'
     ];
+      public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+     public function ticket()
+    {
+        return $this->belongsTo(ticket::class, 'tickets_id');
+    }
 }

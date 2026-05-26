@@ -1,5 +1,5 @@
 @extends('navbar')
-@section('title','agent')
+@section('title','Admin Dashboard')
 @section('content')
 <!DOCTYPE html>
 <html lang="en">
@@ -95,6 +95,32 @@
                 </div>
 
             </div>
+             <div class="col-md-4">
+
+                <div class="card shadow border-0 rounded-4">
+
+                    <div class="card-body text-center">
+
+                       <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+
+                        <h5 class="mt-3">
+                            SLA breached tickets
+
+                        </h5>
+
+                        <h2 class="fw-bold">
+                            {{ $salbreachTickets}}
+                        </h2>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+        
 
 
         </div>

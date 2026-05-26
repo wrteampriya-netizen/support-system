@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
-
+// use Illuminate\Auth\Events\Registered;
 class UserService
 {
     public function store(array $data)
@@ -33,6 +33,7 @@ class UserService
         ]);
         
             $user->assignRole('customer');
+            // event(new Registered($user));
             
         
 

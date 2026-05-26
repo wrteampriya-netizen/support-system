@@ -1,12 +1,11 @@
 <?php
 
-
-
-
 namespace App\Http\Controllers;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Models\notification;
+use App\Models\ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -29,19 +28,24 @@ class Team_leaderController extends Controller
         $tickets = DB::table('tickets')
             ->where('assign_to', $user_id)
             ->whereNull('agent_id')
-
             ->where('status', 'open')
+            ->orderBy('created_at', 'desc')
             ->get();
 
 
         $acceptedTickets = DB::table('tickets')
             ->where('assign_to', $user_id)
+            ->orderBy('created_at', 'desc')
             ->get();
+
+
+        $notification = notification::where('user_id', auth()->id())->latest()->get();
 
         return view('team_leader.create', compact(
             'tickets',
             'acceptedTickets',
-            'users'
+            'users',
+            'notification'
         ));
     }
 
@@ -111,7 +115,21 @@ class Team_leaderController extends Controller
 
                     'updated_at' => now()
                 ]);
+            $ticket = ticket::find($ticket);
+
+            notification::create([
+
+                'user_id' => $agent_id,
+                'title' => $ticket->subject,
+                'description' => $ticket->description,
+                'tickets_id' => $ticket->id,
+                'is_read' => 0
+
+            ]);
         }
+
+
+
 
         return back()
             ->with('success', 'Ticket assigned successfully');
@@ -223,5 +241,22 @@ class Team_leaderController extends Controller
 
         return redirect()->back()
             ->with('success', 'Ticket status updated');
+    }
+
+
+    public function openNotification($id)
+    {
+        $notification = notification::find($id);
+        if ($notification) {
+            $notification->update([
+                'is_read' => 1
+
+            ]);
+            return redirect()->route(
+                'leader.tickets',
+                ['ticket_id' => $notification->tickets_id]
+            );
+        }
+        return back();
     }
 }
