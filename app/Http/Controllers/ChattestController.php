@@ -9,60 +9,44 @@ use Illuminate\Support\Facades\DB;
 
 class ChattestController extends Controller
 {
+// public function index()
+// {
+//     $userId = auth()->id();
 
+//     $user = auth()->user();
 
-    public function index()
-    {
-        $userId = auth()->id();
+//     // CUSTOMER LOGIN
+//     if ($user->hasRole('Customer')) {
 
-        $username = auth()->user();
+//         $senderIds = DB::table('message')
+//             ->where('reciever_id', $userId)
+//             ->pluck('sender_id')
+//             ->unique();
 
-        if ($username->hasRole('customer')) {
+//         $users = User::whereIn('id', $senderIds)
+//             ->role([
+//                 'Admin',
+//                 'Super Admin',
+//                 'Team Leader',
+//                 'Support Agent'
+//             ])
+//             ->get();
+//     }
 
-            $agentIds = DB::table('message')
+//     // STAFF LOGIN
+//     else {
 
-                ->where('reciever_id', $userId)
+//         $users = User::role([
+//             'Admin',
+//             'Super Admin',
+//             'Team Leader',
+//             'Support Agent'
+//         ])
+//         ->where('id', '!=', $userId)
+//         ->get();
+//     }
 
-                ->where('sender_id', '!=', $userId)
+//     return view('agent.index', compact('users'));
+// }
 
-                ->pluck('sender_id')
-
-                ->unique();
-
-            $users = User::whereIn('id', $agentIds)
-
-                ->role([
-                    'Admin',
-                    'Super Admin',
-                    'Team Leader',
-                    'Support Agent'
-                ])
-
-                ->get();
-        }
-        
-        else {
-
-            $users = User::role([
-                'Support Agent',
-                'Team Leader',
-                'Super Admin'
-            ])
-                ->where('id', '!=', $userId)
-                ->get();
-
-            foreach ($users as $user) {
-
-                $user->unread_count = message::where('sender_id', $user->id)
-
-                    ->where('reciever_id', $userId)
-
-                    ->where('is_read', 0)
-
-                    ->count();
-
-                     return view('chat.list', compact('users'));
-            }
-        }
-    }
 }

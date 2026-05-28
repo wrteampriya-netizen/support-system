@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Jobs\Ticktclosejob;
+use App\Jobs\ActivityLogJob;
 use Illuminate\Http\Request;
 use App\Models\ticket;
 use App\Models\User;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\ticketCloseMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 
 class agentController extends Controller
 {
@@ -22,13 +24,14 @@ class agentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Viewed assigned tickets',
-            'old_value' => null,
-            'new_value' => 'Agent opened ticket list',
-            'ticket_id' => null
-        ]);
+        
+ActivityLogJob::dispatch(
+            auth()->id(),
+             'Viewed assigned tickets',
+            null,
+            'Agent opened ticket list',
+             null
+        );
 
         return view('agent.create', compact('tickets'));
     }
@@ -45,13 +48,15 @@ class agentController extends Controller
                 'updated_at' => now()
             ]);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Agent started work',
-            'old_value' => 'open',
-            'new_value' => 'in_progress',
-            'ticket_id' => $id
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+             'Agent started work',
+            'open',
+             'in_progress',
+             $id
+        );
+          Cache::forget('admin_dashbored');
+        Cache::forget('ticket_report');
 
         return redirect()->back()
             ->with('success', 'Ticket accepted');
@@ -64,15 +69,18 @@ class agentController extends Controller
     $newstatus = $request->status;
 
     $ticket->status = $newstatus;
+    
     $ticket->save();
+    Cache::forget('admin_dashboard');
+Cache::forget('ticket_report');
 
-    ActivityLog::create([
-        'user_id' => auth()->id(),
-        'action' => 'Agent updated status',
-        'old_value' => $old,
-        'new_value' => $newstatus,
-        'ticket_id' => $id
-    ]);
+    ActivityLogJob::dispatch(
+         auth()->id(),
+        'Agent updated status',
+         $old,
+         $newstatus,
+         $id
+    );
 
     if ($newstatus === 'closed') {
 
@@ -130,13 +138,13 @@ class agentController extends Controller
         }
 
         $ticket->save();
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Comment added',
-            'old_value' => null,
-            'new_value' => $comment,
-            'ticket_id' => $id
-        ]);
+        ActivityLogJob::dispatch(
+           auth()->id(),
+           'Comment added',
+            null,
+             $comment,
+             $id
+        );
 
         return redirect()->back();
     }

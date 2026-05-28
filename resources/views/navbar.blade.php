@@ -1,5 +1,6 @@
 @php
 
+
 $notificationService = app(\App\Services\notifications::class);
 
 $unread = $notificationService->unreadCount();
@@ -207,7 +208,7 @@ $notifications = $notificationService->latestNotifications();
                             </div>
 
                             <a href="{{ route('notification.open', $note->id) }}">
-                                <i class="bi bi-plus-circle text-success fs-5"></i>
+                               <i class="bi bi-arrow-right-short fs-4"></i>
                             </a>
 
                         </div>
@@ -331,9 +332,9 @@ $notifications = $notificationService->latestNotifications();
 
 
 
-            {{-- ========================================= --}}
+          
             {{-- ADMIN --}}
-            {{-- ========================================= --}}
+            
             @role('Admin')
 
             <li class="nav-item">
@@ -403,9 +404,9 @@ $notifications = $notificationService->latestNotifications();
 
 
 
-            {{-- ========================================= --}}
+            
             {{-- TEAM LEADER --}}
-            {{-- ========================================= --}}
+            
             @role('Team Leader')
 
             <li class="nav-item">
@@ -428,9 +429,9 @@ $notifications = $notificationService->latestNotifications();
 
 
 
-            {{-- ========================================= --}}
+            
             {{-- SUPPORT AGENT --}}
-            {{-- ========================================= --}}
+            
             @role('Support Agent')
 
             <li class="nav-item">
@@ -451,9 +452,9 @@ $notifications = $notificationService->latestNotifications();
 
 
 
-            {{-- ========================================= --}}
+           
             {{-- CUSTOMER --}}
-            {{-- ========================================= --}}
+            
             @role('Customer')
 
             <li class="nav-item">

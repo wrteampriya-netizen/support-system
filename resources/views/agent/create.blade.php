@@ -63,33 +63,39 @@
 
                     <td>{{ $ticket->category }}</td>
 
+
                     {{-- SLA STATUS --}}
                     <td>
+
+                        @php
+                        $deadline = strtotime($ticket->sla_deadline);
+                        $currentTime = time();
+                        $hoursLeft = ($deadline - $currentTime) / 3600;
+                        @endphp
+
                         @if($ticket->status == 'closed' || $ticket->status == 'resolved')
 
                         <span style="color: gray;">Closed</span>
 
-                        @elseif($ticket->sla_deadline && \Carbon\Carbon::parse($ticket->sla_deadline)->isPast())
+                        @elseif($deadline < $currentTime)
 
-                        <span style="color: red; font-weight: bold;">OVERDUE</span>
+                            <span style="color: red; font-weight: bold;">OVERDUE</span>
 
-                        @elseif($ticket->sla_deadline && now()->diffInHours($ticket->sla_deadline) <= 1)
+                            @elseif($hoursLeft <= 1)
 
-                            <span style="color: orange; font-weight: bold;">Breaching Soon!</span>
+                                <span style="color: orange; font-weight: bold;">Breaching Soon!</span>
 
-                            @else
+                                @else
 
-                            <span style="color: green;">Within SLA</span>
+                                <span style="color: green;">Within SLA</span>
 
-                            @endif
+                                @endif
+
                     </td>
 
                     {{-- Deadline --}}
                     <td>
-                        {{ $ticket->sla_deadline
-                ? \Carbon\Carbon::parse($ticket->sla_deadline)->format('d M Y, h:i A')
-                : 'No Deadline'
-            }}
+                        {{ $ticket->sla_deadline ? date('d M Y, h:i A', strtotime($ticket->sla_deadline)): 'No Deadline'}}
                     </td>
 
                     {{-- Created time --}}
@@ -113,10 +119,11 @@
                                 <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>
                                     Closed
                                 </option>
-                                <option value="Resolved" {{ $ticket->status == 'Resolved' ? 'selected' : '' }}>
+                                <option value="resolved" {{ $ticket->status == 'resolved' ? 'selected' : '' }}>
                                     Resolved
                                 </option>
-                                 <option value="Pending" {{ $ticket->status == 'Pending' ? 'selected' : '' }}>
+
+                                <option value="pending" {{ $ticket->status == 'pending' ? 'selected' : '' }}>
                                     Pending
                                 </option>
 

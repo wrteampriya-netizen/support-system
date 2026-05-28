@@ -210,7 +210,7 @@ Route::post('/agent/status/{id}', [agentController::class, 'updateStatus'])->nam
 
 Route::get('agent/comment/list',[agentController::class,'getcomment'])->name('Comments.list');
 Route::post('/agent/add/comments/{id}',[agentController::class,'addComment'])->name('addComments');
-Route::get('/chat/index',[ChattestController::class,'index'])->name('chat.test');
+Route::get('/chat/index',[messageController::class,'index'])->name('chat.test');
 Route::get('/chats', [messageController::class, 'index'])->name('chats.index');
 
 Route::get('/chats/{id}', [messageController::class, 'openchat'])->name('chats.open');

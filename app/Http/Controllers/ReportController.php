@@ -5,20 +5,32 @@ namespace App\Http\Controllers;
 use App\Models\ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ReportController extends Controller
 {
     //
     public function ticketReport()
     {
-        $total = ticket::count();
-        $openTicket = ticket::where('status', 'open')->count();
-        $closeTicekts = ticket::where('status', 'closed')->count();
-        $PendingTicekts = ticket::where('status', 'Pending')->count();
-        $ResolvedTicekts = ticket::where('status', 'Resolved')->count();
-        $InProgressTicekts = ticket::where('status', 'in_progress')->count();
+        $data=Cache::remember('ticket_report',300,function(){
+            return [
+                'total' => ticket::count(),
+        'openTicket' => ticket::where('status', 'open')->count(),
+        'closeTicekts' => ticket::where('status', 'closed')->count(),
+        'PendingTicekts' => ticket::where('status', 'Pending')->count(),
+        'ResolvedTicekts' => ticket::where('status', 'Resolved')->count(),
+        'InProgressTicekts' => ticket::where('status', 'in_progress')->count(),
+            ];
 
-        return view('report.tickets', compact('total', 'openTicket', 'closeTicekts', 'PendingTicekts', 'ResolvedTicekts', 'InProgressTicekts'));
+        });
+        // $total = ticket::count();
+        // $openTicket = ticket::where('status', 'open')->count();
+        // $closeTicekts = ticket::where('status', 'closed')->count();
+        // $PendingTicekts = ticket::where('status', 'Pending')->count();
+        // $ResolvedTicekts = ticket::where('status', 'Resolved')->count();
+        // $InProgressTicekts = ticket::where('status', 'in_progress')->count();
+
+        return view('report.tickets', $data);
     }
 
     public function agentReport()
@@ -33,10 +45,10 @@ class ReportController extends Controller
 
     public function SlaReport()
     {
-        $slaTickets = ticket::where('sla_deadline', '<', now())
-            ->where('status', '!=', 'closed')
-           
-            ->get();
+       $slaTickets = ticket::where('sla_deadline', '<', now())
+    ->whereNotIn('status', ['closed', 'Resolved'])
+    ->latest()
+    ->get();
 
             
 

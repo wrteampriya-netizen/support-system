@@ -12,17 +12,65 @@ use App\Models\User;
 class messageController extends Controller
 {
     //
-    public function index()
+    // public function index()
+    // {
+    //     $userId = auth()->id();
+    //     $chats = DB::table('message')
+       
+    //         ->where('reciever_id', $userId)
+    //         ->orderby('created_at', 'desc')
+    //         ->get();
+
+    //     return view('agent.index', compact('chats'));
+    // }
+//     
+// public function index()
+// {
+//     $userId = auth()->id();
+
+//     $senders = DB::table('message')
+//         ->where('reciever_id', $userId)
+//         ->select('sender_id')
+//         ->distinct()
+//         ->get();
+
+//     foreach ($senders as $sender) {
+
+//         $sender->unread = DB::table('message')
+//             ->where('sender_id', $sender->sender_id)
+//             ->where('reciever_id', $userId)
+//             ->where('is_read', 0)
+//             ->count();
+//     }
+    
+
+
+//     return view('agent.index', [
+//         'chats' => $senders
+//     ]);
+// }
+  public function index()
     {
         $userId = auth()->id();
+
         $chats = DB::table('message')
-       
             ->where('reciever_id', $userId)
-            ->orderby('created_at', 'desc')
+            ->select('sender_id')
+            ->distinct()
             ->get();
+
+        foreach ($chats as $chat) {
+
+            $chat->unread = DB::table('message')
+                ->where('sender_id', $chat->sender_id)
+                ->where('reciever_id', $userId)
+                ->where('is_read', 0)
+                ->count();
+        }
 
         return view('agent.index', compact('chats'));
     }
+
 
     public function openchat($id)
 {

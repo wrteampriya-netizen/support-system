@@ -1,7 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Jobs\TicktCreatedjob;
+use App\Jobs\sendnotificationJob;
+use App\Jobs\ActivityLogJob;
 use App\Mail\ticketCreatedMail;
 use Illuminate\Http\Request;
 use App\Models\ticket;
@@ -10,13 +13,18 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\notification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 
 class CustomerController extends Controller
 {
     //
     public function showTickets()
     {
-        $categories = Category::all();
+        // $categories = Category::all();
+        $categories=Cache::remember('all_categories', 300, function () {
+            return  Category::all();
+            
+        });
 
         return  view('customer.create', compact('categories'));
     }
@@ -57,33 +65,42 @@ class CustomerController extends Controller
         $validate['assign_to'] = null;
 
         $ticket = ticket::create($validate);
-        ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'action'    => 'Ticket Created',
-            'old_value' => null,
-            'new_value' => $ticket->subject,
-            'ticket_id' => $ticket->id
-        ]);
+        Cache::forget('admin_dashbored');
+        Cache::forget('ticket_report');
+
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Ticket Created',
+            null,
+            $ticket->subject,
+            $ticket->id
+        );
+
+
+        // ActivityLog::create([
+        //     'user_id'   => auth()->id(),
+        //     'action'    => 'Ticket Created',
+        //     'old_value' => null,
+        //     'new_value' => $ticket->subject,
+        //     'ticket_id' => $ticket->id
+        // ]);
 
         $admins = User::role('admin')->get();
 
         foreach ($admins as $admin) {
-            notification::create([
-                'user_id' => $admin->id,
-                'title' => $ticket->subject,
-                'description' => $ticket->subject,
-                'tickets_id' => $ticket->id,
-                'is_read' => 0,
-            ]);
+
+            sendnotificationJob::dispatch(
+
+                $admin->id,
+                $ticket->subject,
+                $ticket->description,
+                $ticket->id
+            );
         }
-
-
-
-
-          TicktCreatedjob::dispatch(
+        TicktCreatedjob::dispatch(
             $ticket,
             auth()->user()->email
-            );                                                                                
+        );
 
         return redirect()->route('customer.create')
             ->with('success', 'ticket is created');
@@ -136,7 +153,7 @@ class CustomerController extends Controller
         ]);
 
         $data = ticket::findOrFail($id);
-        $old=$data->toArray();
+        $old = $data->subject;
 
         $data->subject = $request->subject;
         $data->description = $request->description;
@@ -165,14 +182,16 @@ class CustomerController extends Controller
         }
 
         $data->save();
+        Cache::forget('admin_dashbored');
+        Cache::forget('ticket_report');
 
-          ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'action'    => 'Ticket updated',
-            'old_value' => json_encode($old),
-            'new_value' => json_encode($data->toArray()),
-            'ticket_id' => $data->id
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Ticket updated',
+            $old,
+            $request->update,
+            $data->id
+        );
 
         return redirect()->route('customer.showindex')
             ->with('success', 'update data');
@@ -182,15 +201,15 @@ class CustomerController extends Controller
     {
 
         $data = ticket::findOrFail($id);
-        
 
-         ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'action'    => 'Ticket deleted',
-            'old_value' => $data->subject,
-            'new_value' => null,
-            'ticket_id' => $data->id
-        ]);
+
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Ticket deleted',
+            $data->subject,
+            null,
+            $data->id
+        );
 
         if (
             $data->attachment &&
@@ -201,6 +220,8 @@ class CustomerController extends Controller
         }
 
         $data->delete();
+          Cache::forget('admin_dashbored');
+        Cache::forget('ticket_report');
 
 
 
@@ -208,4 +229,3 @@ class CustomerController extends Controller
             ->with('success', 'delete data');
     }
 }
-

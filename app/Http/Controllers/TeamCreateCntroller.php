@@ -1,9 +1,10 @@
 <?php
 
-
-
 namespace App\Http\Controllers;
+
 use App\Jobs\TicktAssignjob;
+use App\Jobs\sendnotificationJob;
+use App\Jobs\ActivityLogJob;
 use Illuminate\Http\Request;
 use App\Models\team;
 use App\Models\User;
@@ -11,6 +12,7 @@ use App\Models\ticket;
 use App\Models\notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
 use App\Mail\ticketAssignMail;
 use App\Models\ActivityLog;
 
@@ -42,17 +44,18 @@ class TeamCreateCntroller extends Controller
         ]);
 
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'team is created',
-            'old_value' => null,
-            'new_value' => $team->name,
-            'ticket_id' => null
-        ]);
+
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'team is created',
+            null,
+            $team->name,
+            null
+        );
 
         $team->members()->attach($request->agents);
 
-        return redirect()->route('homepage')
+        return back()   
             ->with('success', 'team created');
     }
 
@@ -88,14 +91,13 @@ class TeamCreateCntroller extends Controller
         $data = team::findOrFail($id);
 
 
-
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'team is updated',
-            'old_value' => $data->name,
-            'new_value' => $request->team_name,
-            'ticket_id' => null
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'team is updated',
+            $data->name,
+            $request->team_name,
+            null
+        );
 
         $data->update([
             'name'        => $request->team_name,
@@ -115,13 +117,14 @@ class TeamCreateCntroller extends Controller
         $team = team::findOrFail($id);
 
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'team is deleted',
-            'old_value' => $team->name,
-            'new_value' => null,
-            'ticket_id' => null
-        ]);
+
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'team is deleted',
+            $team->name,
+            null,
+            null
+        );
 
         $team->members()->detach();
 
@@ -198,68 +201,42 @@ class TeamCreateCntroller extends Controller
 
                     'updated_at' => now(),
                 ]);
+                Cache::forget('admin_dashboard');
+Cache::forget('ticket_report');
 
             $ticketdetail = DB::table('tickets')
                 ->where('id', $ticket)
                 ->first();
 
-            notification::create([
 
-                'user_id' => $leader_id,
-                'title' => $ticketdetail->subject,
-                'description'  => $ticketdetail->description,
-                'tickets_id' => $ticket,
-                'is_read' => 0
+            sendnotificationJob::dispatch(
+                $leader_id,
+                $ticketdetail->subject,
+                $ticketdetail->description,
+                $ticket,
+            );
 
-            ]);
 
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => "admin assign ticket to Team Leader",
-                'old_value' => 'Unassigned',
-                'new_value' => $leader->name,
-                'ticket_id' => $ticket
-            ]);
 
-            
+            ActivityLogJob::dispatch(
+                auth()->id(),
+                "admin assign ticket to Team Leader",
+                'Unassigned',
+                $leader->name,
+                $ticket
+            );
+
+
             TicktAssignjob::dispatch(
                 $ticketdetail,
                 $leader->email
             );
-
-
         }
 
         return back()
             ->with('success', 'Tickets assigned successfully');
     }
 
-
-    // public function updateStatus(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'status' => 'required|in:open,in_progress,pending,resolved,closed'
-    //     ]);
-    //     $data=ticket::findOrFail($id);
-
-    //      ActivityLog::create([
-    //             'user_id'=> auth()->id(),
-    //             'action' => 'Ticket status updated by admin',
-    //             'old_value' => $data->status,
-    //             'new_value'=>$request->status,
-    //             'ticket_id' =>$data->id
-    //         ]);
-
-
-    //     DB::table('tickets')
-    //         ->where('id', $id)
-    //         ->update([
-    //             'status' => $request->status,
-    //             'updated_at' => now()
-    //         ]);
-
-    //     return redirect()->back();
-    // }
 
 
 
@@ -268,16 +245,19 @@ class TeamCreateCntroller extends Controller
         $ticket = ticket::findOrFail($id);
 
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'ticket is deleted',
-            'old_value' => $ticket->subject,
-            'new_value' => null,
-            'ticket_id' => $ticket->id
-        ]);
+
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'ticket is deleted',
+            $ticket->subject,
+            null,
+            $ticket->id
+        );
 
 
         $ticket->delete();
+        Cache::forget('admin_dashboard');
+Cache::forget('ticket_report');
 
         return back()
             ->with('success', 'Ticket deleted successfully');
@@ -326,14 +306,15 @@ class TeamCreateCntroller extends Controller
         $ticket = ticket::findOrFail($id);
 
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => "Status changed by admin",
-            'old_value' => $ticket->status,
-            'new_value' => $request->status,
-            'ticket_id' => $ticket->id
 
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            "Status changed by admin",
+            $ticket->status,
+            $request->status,
+            $ticket->id
+
+        );
 
         $ticket->status = $request->input('status');
 
@@ -346,32 +327,33 @@ class TeamCreateCntroller extends Controller
 
     public function ticketCount()
     {
-        $total = ticket::count();
 
-        $openTicketsCount = ticket::where('status', 'open')->count();
+    
+    $data = Cache::remember('admin_dashbored', 300, function () {
 
-        $closeTicketsCount = ticket::where('status', 'closed')->count();
+        return [
 
-        $pendingTicketsCount = ticket::where('status', 'pending')->count();
+            'total' => ticket::count(),
 
-        $progressTicketsCount = ticket::where('status', 'in_progress')->count();
+            'openTicketsCount' => ticket::where('status', 'open')->count(),
 
-        $resolvedTicketsCount = ticket::where('status', 'resolved')->count();
+            'closeTicketsCount' => ticket::where('status', 'closed')->count(),
 
-        $salbreachTickets = ticket::where('status', '!=', 'closed')->where('sla_deadline', '<', now())->count();
+            'pendingTicketsCount' => ticket::where('status', 'pending')->count(),
 
+            'progressTicketsCount' => ticket::where('status', 'in_progress')->count(),
 
-        return view(
-            'admin.Dashboard',
-            compact(
-                'total',
-                'openTicketsCount',
-                'closeTicketsCount',
-                'pendingTicketsCount',
-                'progressTicketsCount',
-                'resolvedTicketsCount',
-                'salbreachTickets'
-            )
-        );
+            'resolvedTicketsCount' => ticket::where('status', 'resolved')->count(),
+
+            'salbreachTickets' => ticket::where('status', '!=', 'closed')
+                ->where('sla_deadline', '<', now())
+                ->count()
+
+        ];
+    });
+
+    return view('admin.Dashboard', $data);
+
+       
     }
 }

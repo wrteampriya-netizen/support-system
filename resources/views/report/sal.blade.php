@@ -32,7 +32,7 @@
                 <td>{{$ticket->subject}}</td>
                 <td class="badge bg-danger">{{$ticket->status}}</span></td>
                 <td>{{$ticket->sla_deadline}}</td>
-                <td>now()</td>
+                <td>{{ now()->format('d M Y h:i A') }}</td>
                 <td>
                     {{ now()->diff($ticket->sla_deadline)->format('%h Hours %i Minutes') }}
                 </td>

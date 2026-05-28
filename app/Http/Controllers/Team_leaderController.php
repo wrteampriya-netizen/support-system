@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use  App\Jobs\ActivityLogJob;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\notification;
 use App\Models\ticket;
 use App\Models\ActivityLog;
+use App\Jobs\sendnotificationJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\Cache;
 class Team_leaderController extends Controller
 {
     public function myTickets()
@@ -45,9 +47,9 @@ class Team_leaderController extends Controller
         ));
     }
 
-    // =========================
+
     // ACCEPT TICKET
-    // =========================
+
     public function accept($id)
     {
         $ticket = DB::table('tickets')
@@ -61,21 +63,21 @@ class Team_leaderController extends Controller
                 'updated_at' => now()
             ]);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Leader accepted ticket',
-            'old_value' => $ticket->status,
-            'new_value' => 'open',
-            'ticket_id' => $id
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Leader accepted ticket',
+            $ticket->status,
+            'open',
+            $id
+        );
 
         return redirect()->back()
             ->with('success', 'Ticket accepted');
     }
 
-    // =========================
+
     // REJECT TICKET
-    // =========================
+
     public function reject($id)
     {
         $ticket = DB::table('tickets')
@@ -90,21 +92,21 @@ class Team_leaderController extends Controller
                 'updated_at' => now()
             ]);
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Leader rejected ticket',
-            'old_value' => $ticket->status,
-            'new_value' => 'closed',
-            'ticket_id' => $id
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Leader rejected ticket',
+            $ticket->status,
+            'closed',
+            $id
+        );
 
         return redirect()->back()
             ->with('success', 'Ticket rejected');
     }
 
-    // =========================
+
     // ASSIGN TO AGENT
-    // =========================
+
     public function assign(Request $request)
     {
         $request->validate([
@@ -117,7 +119,7 @@ class Team_leaderController extends Controller
 
         foreach ($ticketIds as $ticketId) {
 
-            $ticket = DB::table('tickets')
+            DB::table('tickets')
                 ->where('id', $ticketId)
                 ->first();
 
@@ -128,35 +130,38 @@ class Team_leaderController extends Controller
                     'status' => 'open',
                     'updated_at' => now()
                 ]);
-                $agent = User::find($agent_id);
+                   Cache::forget('admin_dashboard');
+Cache::forget('ticket_report');
+                
+            $agent = User::find($agent_id);
 
-            ActivityLog::create([
-                'user_id' => auth()->id(),
-                'action' => 'Assigned to Agent',
-                'old_value' => 'Unassigned',
-                'new_value' => $agent->name,
-                'ticket_id' => $ticketId
-            ]);
+            ActivityLogJob::dispatch(
+                auth()->id(),
+                'Assigned to Agent',
+                'Unassigned',
+                $agent->name,
+                $ticketId
+            );
 
             $ticketModel = ticket::find($ticketId);
 
-            notification::create([
-                'user_id' => $agent_id,
-                'title' => $ticketModel->subject,
-                'description' => $ticketModel->description,
-                'tickets_id' => $ticketModel->id,
-                'is_read' => 0
-            ]);
+            sendnotificationJob::dispatch(
+                $agent_id,
+                $ticketModel->subject,
+                $ticketModel->description,
+                $ticketModel->id
+
+            );
         }
 
         return back()
             ->with('success', 'Ticket assigned successfully');
     }
 
-    // =========================
+
     // STATUS UPDATE FLOW
-    // =========================
-    public function updatestaus(Request $request, $id)
+
+    public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'status' => 'required|in:open,in_progress,pending,resolved,closed'
@@ -175,22 +180,24 @@ class Team_leaderController extends Controller
                 'status' => $new,
                 'updated_at' => now()
             ]);
+            Cache::forget('admin_dashboard');
+Cache::forget('ticket_report');
 
-        ActivityLog::create([
-            'user_id' => auth()->id(),
-            'action' => 'Status Changed by Leader',
-            'old_value' => $old,
-            'new_value' => $new,
-            'ticket_id' => $id
-        ]);
+        ActivityLogJob::dispatch(
+            auth()->id(),
+            'Status Changed by Leader',
+            $old,
+            $new,
+            $id
+        );
 
         return redirect()->back()
             ->with('success', 'Ticket status updated');
     }
 
-    // =========================
+
     // TEAM
-    // =========================
+
     public function myTeam()
     {
         $owner_id = auth()->id();
@@ -215,9 +222,9 @@ class Team_leaderController extends Controller
         return view('team_leader.allteam', compact('team'));
     }
 
-    // =========================
+
     // NOTIFICATION OPEN
-    // =========================
+
     public function openNotification($id)
     {
         $notification = notification::find($id);
