@@ -62,17 +62,24 @@ class User extends Authenticatable
     {
         $this->belongsToMany(Team::class);
     }
-    public function tickets()
-    {
-        return $this->hasManyThrough(
-            ticket::class,
-            assign_ticket::class,
-            'user_id', // Foreign key on assign_tickets table
-            'id',        // Foreign key on tickets table (usually ticket id)
-            'id',        // Local key on users table
-            'tickets_id' // Local key on assign_tickets table
+    // public function tickets()
+    // {
+    //     return $this->hasManyThrough(
+    //         ticket::class,
+    //         assign_ticket::class,
+    //         'user_id', // Foreign key on assign_tickets table
+    //         'id',        // Foreign key on tickets table (usually ticket id)
+    //         'id',        // Local key on users table
+    //         'tickets_id' // Local key on assign_tickets table
 
-        );
-    }
-    
+    //     );
+    // }
+public function tickets()
+{
+    return $this->hasMany(ticket::class,'agent_id');
+}
+ public function UserTicket()
+{
+    return $this->hasMany(ticket::class,'customer_id');
+}   
 }

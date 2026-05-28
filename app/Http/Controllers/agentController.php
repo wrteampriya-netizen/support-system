@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Jobs\Ticktclosejob;
 use Illuminate\Http\Request;
 use App\Models\ticket;
+use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\ticketCloseMail;
@@ -14,35 +16,23 @@ class agentController extends Controller
 
     public function index()
     {
-        $agent_id = Auth::id();
+        $agentId = Auth::id();
 
-
-
-        $tickets = DB::table('tickets')
-            ->where('agent_id', $agent_id)
-
-
-            ->where('status', 'open')
+        $tickets = ticket::where('agent_id', $agentId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Viewed assigned tickets',
+            'old_value' => null,
+            'new_value' => 'Agent opened ticket list',
+            'ticket_id' => null
+        ]);
 
-        $acceptedTickets = ticket::where('agent_id', $agent_id)
-            ->whereIn('status', [
-                'in_progress',
-                'pending',
-                'closed',
-                'resolved'
-            ])
-            ->get();
-
-        return view(
-            'agent.create',
-            compact(
-                'tickets',
-                'acceptedTickets'
-            )
-        );
+        return view('agent.create', compact('tickets'));
     }
+
     public function accept($id)
     {
         DB::table('tickets')
@@ -55,38 +45,55 @@ class agentController extends Controller
                 'updated_at' => now()
             ]);
 
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Agent started work',
+            'old_value' => 'open',
+            'new_value' => 'in_progress',
+            'ticket_id' => $id
+        ]);
+
         return redirect()->back()
             ->with('success', 'Ticket accepted');
     }
-
     public function updateStatus(Request $request, $id)
-    {
-        ticket::where('id', $id)->update([
-            'status' => $request->status
-        ]);
-        return redirect()->back()
-            ->with('success', 'Ticket updated');
+{
+    $ticket = ticket::findOrFail($id);
+
+    $old = $ticket->status;
+    $newstatus = $request->status;
+
+    $ticket->status = $newstatus;
+    $ticket->save();
+
+    ActivityLog::create([
+        'user_id' => auth()->id(),
+        'action' => 'Agent updated status',
+        'old_value' => $old,
+        'new_value' => $newstatus,
+        'ticket_id' => $id
+    ]);
+
+    if ($newstatus === 'closed') {
+
+       
+        $user = User::find($ticket->customer_id);
+
+        if ($user) {
+            Ticktclosejob::dispatch(
+                $ticket->toArray(),
+                $user->email
+            );
+        }
     }
 
+    
+
+    return redirect()->back()
+        ->with('success', 'Ticket updated');
+}
 
 
-    public function reject($id)
-    {
-        DB::table('tickets')
-            ->where('id', $id)
-            ->update([
-
-
-                'agent_id' => null,
-
-                'status' => 'open',
-
-                'updated_at' => now()
-            ]);
-
-        return redirect()->back()
-            ->with('success', 'Ticket rejected');
-    }
 
 
 
@@ -123,6 +130,13 @@ class agentController extends Controller
         }
 
         $ticket->save();
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Comment added',
+            'old_value' => null,
+            'new_value' => $comment,
+            'ticket_id' => $id
+        ]);
 
         return redirect()->back();
     }
@@ -136,6 +150,7 @@ class agentController extends Controller
             ->whereNotNull('comments')
             ->get();
 
+
         return view(
             'agent.comments',
             compact('comment')
@@ -144,62 +159,9 @@ class agentController extends Controller
 
 
 
-    public function pending($id)
-    {
-        DB::table('tickets')
-            ->where('id', $id)
-            ->update([
-
-
-                'status' => 'pending',
-
-                'updated_at' => now()
-            ]);
-
-        return redirect()->back()
-            ->with('success', 'Waiting for customer reply');
-    }
 
 
 
-    public function resolve($id)
-    {
-        DB::table('tickets')
-            ->where('id', $id)
-            ->update([
 
-
-                'status' => 'resolved',
-
-                'updated_at' => now()
-            ]);
-
-        return redirect()->back()
-            ->with('success', 'Ticket resolved');
-    }
-
-
-
-    public function close($id)
-    {
-        DB::table('tickets')
-            ->where('id', $id)
-            ->update([
-
-                'status' => 'closed',
-
-                'updated_at' => now()
-            ]);
-
-        $ticket = DB::table('tickets')
-            ->where('id', $id)
-            ->first();
-
-        $user = DB::table('users')
-            ->where('id', $ticket->customer_id)
-            ->first();
-
-        Mail::to($user->email)
-            ->send(new ticketCloseMail($ticket));
-    }
+   
 }

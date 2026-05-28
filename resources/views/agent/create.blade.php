@@ -30,10 +30,28 @@
             <th>action</th>
             <th>Meassage</th>
 
-            <tbody>
-                @foreach($acceptedTickets as $ticket)
 
-                <tr>
+
+
+
+            <tbody>
+                @foreach($tickets as $ticket)
+
+                @php
+                $rowColor = '';
+
+                if($ticket->status == 'open') {
+                $rowColor = '#fff3cd';
+                }
+                elseif(in_array($ticket->status, ['in_progress','pending'])) {
+                $rowColor = '#d1ecf1';
+                }
+                else {
+                $rowColor = '#d4edda';
+                }
+                @endphp
+
+                <tr style="background: {{ $rowColor }}">
 
                     <td>{{ $ticket->id }}</td>
 
@@ -44,127 +62,129 @@
                     <td>{{ $ticket->priority }}</td>
 
                     <td>{{ $ticket->category }}</td>
-                    <td>
 
+                    {{-- SLA STATUS --}}
+                    <td>
                         @if($ticket->status == 'closed' || $ticket->status == 'resolved')
 
-                        <span style="color: gray;">
-                            Closed
-                        </span>
+                        <span style="color: gray;">Closed</span>
 
-                        @elseif($ticket->sla_deadline && $ticket->sla_deadline->isPast())
+                        @elseif($ticket->sla_deadline && \Carbon\Carbon::parse($ticket->sla_deadline)->isPast())
 
-                        <span style="color: red; font-weight: bold;">
-                            OVERDUE
-                        </span>
+                        <span style="color: red; font-weight: bold;">OVERDUE</span>
 
                         @elseif($ticket->sla_deadline && now()->diffInHours($ticket->sla_deadline) <= 1)
 
-                            <span style="color: orange; font-weight: bold;">
-                            Breaching Soon!
-                            </span>
+                            <span style="color: orange; font-weight: bold;">Breaching Soon!</span>
 
                             @else
 
-                            <span style="color: green;">
-                                Within SLA
-                            </span>
+                            <span style="color: green;">Within SLA</span>
 
                             @endif
-
                     </td>
 
+                    {{-- Deadline --}}
                     <td>
-
                         {{ $ticket->sla_deadline
-        ? $ticket->sla_deadline->format('d M Y, h:i A')
-        : 'No Deadline'
-    }}
-
+                ? \Carbon\Carbon::parse($ticket->sla_deadline)->format('d M Y, h:i A')
+                : 'No Deadline'
+            }}
                     </td>
+
+                    {{-- Created time --}}
                     <td>
                         {{ $ticket->created_at->diffForHumans() }}
                     </td>
 
+                    {{-- Status Update --}}
                     <td>
                         <form action="{{ route('agent.status.update', $ticket->id) }}" method="POST">
                             @csrf
 
-                            <select
-                                name="status"
+                            <select name="status"
                                 class="form-select form-select-sm"
                                 onchange="this.form.submit()">
 
-                                <option value="in_progress"
-                                    {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>
+                                <option value="in_progress" {{ $ticket->status == 'in_progress' ? 'selected' : '' }}>
                                     In Progress
                                 </option>
 
-                                <option value="closed"
-                                    {{ $ticket->status == 'closed' ? 'selected' : '' }}>
+                                <option value="closed" {{ $ticket->status == 'closed' ? 'selected' : '' }}>
                                     Closed
+                                </option>
+                                <option value="Resolved" {{ $ticket->status == 'Resolved' ? 'selected' : '' }}>
+                                    Resolved
+                                </option>
+                                 <option value="Pending" {{ $ticket->status == 'Pending' ? 'selected' : '' }}>
+                                    Pending
                                 </option>
 
                             </select>
                         </form>
                     </td>
 
+                    {{-- Comment --}}
                     <td>
-                        <form action="{{route('addComments',$ticket->id)}}" method="post">
+                        <form action="{{ route('addComments',$ticket->id) }}" method="post">
                             @csrf
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#Modal{{$ticket->id}}">
 
-                                <i class="bi bi-chat-left-text"></i> Leave a Comment
+                            <button type="button"
+                                class="btn btn-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#Modal{{ $ticket->id }}">
+                                <i class="bi bi-chat-left-text"></i> Comment
                             </button>
 
-                            <div class="modal fade" id="Modal{{$ticket->id}}" tabindex="-1" aria-hidden="true">
+                            <div class="modal fade" id="Modal{{ $ticket->id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="Modal">Add comment</h5>
 
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Add Comment</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
+
                                         <div class="modal-body">
-                                            <input type="text" class="form-control" placeholder="Add comment here..." name="comment">
+                                            <input type="text" name="comment"
+                                                class="form-control"
+                                                placeholder="Add comment here...">
                                         </div>
+
                                         <div class="modal-footer">
                                             <button type="submit" class="btn btn-primary">Add</button>
-
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
                         </form>
                     </td>
 
-
+                    {{-- Attachment --}}
                     <td>
-
-                        <a href="{{ asset('storage/'.$ticket->attachment) }}"
-                            target="_blank">
-
+                        @if($ticket->attachment)
+                        <a href="{{ asset('storage/'.$ticket->attachment) }}" target="_blank">
                             <img src="{{ asset('storage/'.$ticket->attachment) }}"
                                 class="img-thumbnail"
                                 width="80">
-
                         </a>
-
+                        @else
+                        No File
+                        @endif
                     </td>
 
+                    {{-- Delete --}}
                     <td>
-
                         <button type="button"
                             class="btn btn-danger btn-sm"
                             onclick="removeRow(this)">
-
                             <i class="bi bi-trash"></i>
-
                         </button>
-
                     </td>
+
+                    {{-- Chat --}}
                     <td>
                         <a href="{{ route('chats.open', $ticket->customer_id) }}">
                             Chat
@@ -174,8 +194,7 @@
                 </tr>
 
                 @endforeach
-        </table>
-        </tbody>
+            </tbody>
     </div>
 
 

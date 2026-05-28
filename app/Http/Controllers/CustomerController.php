@@ -1,10 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Jobs\TicktCreatedjob;
 use App\Mail\ticketCreatedMail;
 use Illuminate\Http\Request;
 use App\Models\ticket;
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\notification;
@@ -13,13 +14,15 @@ use Illuminate\Support\Facades\Mail;
 class CustomerController extends Controller
 {
     //
-    public function showTickets(){
-        $categories=Category::all();
-        
-        return  view('customer.create',compact('categories'));
+    public function showTickets()
+    {
+        $categories = Category::all();
+
+        return  view('customer.create', compact('categories'));
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
 
         $validate = $request->validate([
             'subject' => 'required|max:255',
@@ -30,12 +33,12 @@ class CustomerController extends Controller
         ]);
 
 
-        if($request->hasFile('attachment')){
+        if ($request->hasFile('attachment')) {
             $validate['attachment'] = $request->file('attachment')
-            ->store('attachment','public');
+                ->store('attachment', 'public');
         }
 
-        $hours=match($request->priority){
+        $hours = match ($request->priority) {
             'Critical' => 2,
             'High' => 8,
             'Medium' =>  24,
@@ -47,122 +50,162 @@ class CustomerController extends Controller
 
         $validate['customer_id'] = auth()->id();
 
-        
+
         $validate['status'] = 'open';
 
-        
+
         $validate['assign_to'] = null;
 
         $ticket = ticket::create($validate);
+        ActivityLog::create([
+            'user_id'   => auth()->id(),
+            'action'    => 'Ticket Created',
+            'old_value' => null,
+            'new_value' => $ticket->subject,
+            'ticket_id' => $ticket->id
+        ]);
 
-        $admins=User::role('admin')->get();
+        $admins = User::role('admin')->get();
 
-        foreach($admins as $admin){
+        foreach ($admins as $admin) {
             notification::create([
                 'user_id' => $admin->id,
-                'title'=>$ticket->subject,
-                'description'=>$ticket->subject,
+                'title' => $ticket->subject,
+                'description' => $ticket->subject,
                 'tickets_id' => $ticket->id,
                 'is_read' => 0,
             ]);
         }
 
-       
 
 
-        Mail::to(auth()->user()->email)
-        ->send(new ticketCreatedMail($ticket));
+
+          TicktCreatedjob::dispatch(
+            $ticket,
+            auth()->user()->email
+            );                                                                                
 
         return redirect()->route('customer.create')
-        ->with('success','ticket is created');
+            ->with('success', 'ticket is created');
     }
 
-    public function showindex(){
+    public function showindex()
+    {
         return  view('customer.index');
     }
 
-    public function index(){
+    public function index()
+    {
         $data = ticket::all();
         return response()->json($data);
     }
 
-    public function getdata(){
+    public function getdata()
+    {
 
         $userId = auth()->id();
 
-        $data = ticket::where('customer_id',$userId)->get();
+        $data = ticket::where('customer_id', $userId)->get();
 
         return response()->json($data);
     }
 
-    public function data(){
+    public function data()
+    {
         return  view('customer.data');
     }
 
-    public function edit($id){
-         $categories=Category::all();
+    public function edit($id)
+    {
+        $categories = Category::all();
 
         $data = ticket::findOrFail($id);
 
-        return view('customer.edit',compact('data','categories'));
+        return view('customer.edit', compact('data', 'categories'));
     }
 
-    public function update(Request $request,$id){
+    public function update(Request $request, $id)
+    {
 
-       $request->validate([
-            'subject'=>'required|max:255',
-            'description'=>'required',
-            'priority'=>'required|string',
-            'category'=>'required|string',
-            'attachment'=>'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        $request->validate([
+            'subject' => 'required|max:255',
+            'description' => 'required',
+            'priority' => 'required|string',
+            'category' => 'required|string',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         $data = ticket::findOrFail($id);
+        $old=$data->toArray();
 
         $data->subject = $request->subject;
         $data->description = $request->description;
         $data->priority = $request->priority;
         $data->category = $request->category;
 
-        
-        if($data->status == 'pending'){
+
+        if ($data->status == 'pending') {
             $data->status = 'in_progress';
         }
 
-        if($request->hasfile('attachment')){
+        if ($request->hasfile('attachment')) {
 
-            if($data->attachment &&
-            file_exists(storage_path('app/public/'.$data->attachment))){
+            if (
+                $data->attachment &&
+                file_exists(storage_path('app/public/' . $data->attachment))
+            ) {
 
-                unlink(storage_path('app/public/'.$data->attachment));
+                unlink(storage_path('app/public/' . $data->attachment));
             }
 
             $path = $request->file('attachment')
-            ->store('attachment','public');
+                ->store('attachment', 'public');
 
             $data->attachment = $path;
         }
 
         $data->save();
 
+          ActivityLog::create([
+            'user_id'   => auth()->id(),
+            'action'    => 'Ticket updated',
+            'old_value' => json_encode($old),
+            'new_value' => json_encode($data->toArray()),
+            'ticket_id' => $data->id
+        ]);
+
         return redirect()->route('customer.showindex')
-        ->with('success','update data');
+            ->with('success', 'update data');
     }
 
-    public function delete($id){
+    public function delete($id)
+    {
 
         $data = ticket::findOrFail($id);
+        
 
-        if($data->attachment &&
-        file_exists(storage_path('app/public/'.$data->attachment))){
+         ActivityLog::create([
+            'user_id'   => auth()->id(),
+            'action'    => 'Ticket deleted',
+            'old_value' => $data->subject,
+            'new_value' => null,
+            'ticket_id' => $data->id
+        ]);
 
-            unlink(storage_path('app/public/'.$data->attachment));
+        if (
+            $data->attachment &&
+            file_exists(storage_path('app/public/' . $data->attachment))
+        ) {
+
+            unlink(storage_path('app/public/' . $data->attachment));
         }
 
         $data->delete();
 
-        return redirect()->route('customer.showindex')
-        ->with('success','delete data');
-    }
 
+
+        return redirect()->route('customer.showindex')
+            ->with('success', 'delete data');
+    }
 }
+

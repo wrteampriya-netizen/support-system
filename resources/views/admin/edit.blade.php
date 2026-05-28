@@ -30,7 +30,7 @@
 
                 </div>
 
-                
+
 
                 <div class="card-body p-4">
 
@@ -40,12 +40,12 @@
 
                         <div class="row g-4">
 
-                            
+
 
                             <div class="col-md-6">
 
                                 <label for="team_name"
-                                       class="form-label fw-semibold">
+                                    class="form-label fw-semibold">
 
                                     Team Name
 
@@ -60,23 +60,23 @@
                                     </span>
 
                                     <input type="text"
-                                           class="form-control"
-                                           id="team_name"
-                                           name="team_name"
-                                           value="{{$data->name}}"
-                                           placeholder="Enter Team Name"
-                                           required>
+                                        class="form-control"
+                                        id="team_name"
+                                        name="team_name"
+                                        value="{{$data->name}}"
+                                        placeholder="Enter Team Name"
+                                        required>
 
                                 </div>
 
                             </div>
 
-                            
+
 
                             <div class="col-md-6">
 
                                 <label for="team_leader"
-                                       class="form-label fw-semibold">
+                                    class="form-label fw-semibold">
 
                                     Team Leader
 
@@ -91,9 +91,9 @@
                                     </span>
 
                                     <select class="form-select"
-                                            id="team_leader"
-                                            name="team_leader"
-                                            required>
+                                        id="team_leader"
+                                        name="team_leader"
+                                        required>
 
                                         <option value="">
                                             Select Team Leader
@@ -101,11 +101,11 @@
 
                                         @foreach($users as $user)
 
-                                            <option value="{{ $user->id }}" {{old('team_leader',$data->owner_id)==$user->id ? 'selected':''}}>
+                                        <option value="{{ $user->id }}" {{old('team_leader',$data->owner_id)==$user->id ? 'selected':''}}>
 
-                                                {{ $user->name }}
+                                            {{ $user->name }}
 
-                                            </option>
+                                        </option>
 
                                         @endforeach
 
@@ -115,77 +115,65 @@
 
                             </div>
 
-                            
+
 
                             <div class="col-12">
 
                                 <label for="description"
-                                       class="form-label fw-semibold">
+                                    class="form-label fw-semibold">
 
                                     Team Description
 
                                 </label>
 
                                 <textarea class="form-control"
-                                          id="description"
-                                          name="description"
-                                          rows="4"
-                                          placeholder="Enter team description..." {{old('description',$data->description)}}></textarea>
+                                    id="description"
+                                    name="description"
+                                    rows="4"
+                                    placeholder="Enter team description..." {{old('description',$data->description)}}></textarea>
 
                             </div>
 
-                            
 
-                            <div class="col-12">
 
-                                <label for="members"
-                                       class="form-label fw-semibold">
+                            <div class="clo-12">
+                                <label class="border rounded-3 p-3" style="max-height:250px; overflow-y:auto;">
+                                    @foreach ($users as $user)
+                                    <div class="from-check mb-2">
+                                        <input class="form-check-input"
+                                            type="checkbox"
+                                            name="agents[]"
+                                            value="{{ $user->id }}"
+                                            id="user_{{ $user->id }}"
 
-                                    Select Team Members
+                                            {{ in_array($user->id, old('agents', $data->members->pluck('id')->toArray())) ? 'checked' : '' }}>
 
-                                </label>
-
-                                <select class="form-select"
-                                        id="members"
-                                        name="agents[]"
-                                        multiple
-                                        size="8">
-
-                                    @foreach($users as $user)
-
-                                        <option value="{{ $user->id }}" 
-                                        {{in_array ($user->id,old('agents',$data->members->pluck('id')->toarray())) ? 'selected' :''}}>
-                                            {{ $user->name }}
-
-                                        </option>
+                                        <label class="form-check-label" for="user_{{$user->id}}">
+                                            {{$user->name}}
+                                    </div>
 
                                     @endforeach
-
-                                </select>
-
-                                <small class="text-muted">
-
-                                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple users.
-
-                                </small>
-
                             </div>
+                            <small class="text-muted">
+                                Tick users to add them as team members.
+                            </small>
+
 
                         </div>
 
-                       
+
 
                         <div class="d-flex justify-content-end gap-2 mt-5">
 
                             <button type="reset"
-                                    class="btn btn-light border px-4">
+                                class="btn btn-light border px-4">
 
                                 Cancel
 
                             </button>
 
                             <button type="submit"
-                                    class="btn btn-primary px-4 shadow-sm">
+                                class="btn btn-primary px-4 shadow-sm">
 
                                 <i class="bi bi-check-circle me-1"></i>
 

@@ -1,170 +1,195 @@
 @include('navbar')
 
 <div class="container py-5">
-  
 
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
+    <!DOCTYPE html>
+    <html lang="en">
 
-    <meta charset="UTF-8">
+    <head>
 
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8">
 
-    <title>Team Detail</title>
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1.0">
 
-  
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+        <title>Team Detail</title>
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-</head>
-<body>
-<div class="container py-5">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet">
 
-    <div class="row justify-content-center">
+        <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-        <div class="col-lg-9">
+    </head>
 
-            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+    <body>
+        <div class="container py-5">
 
-                
+            <div class="row justify-content-center">
 
-                <div class="bg-primary text-white p-4">
+                <div class="col-lg-9">
 
-                    <h3 class="mb-1 fw-bold">
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                        <i class="bi bi-people-fill me-2"></i>
 
-                        Create Support Team
 
-                    </h3>
+                        <div class="bg-primary text-white p-4">
 
-                    <p class="mb-0 opacity-75">
-                        Create and manage support teams easily
-                    </p>
+                            <h3 class="mb-1 fw-bold">
 
-                </div>
+                                <i class="bi bi-people-fill me-2"></i>
 
-                
+                                Create Support Team
 
-                <div class="card-body p-4">
+                            </h3>
 
-                    <form method="POST" action="{{ route('team.store') }}">
+                            <p class="mb-0 opacity-75">
+                                Create and manage support teams easily
+                            </p>
 
-                        @csrf
+                        </div>
 
-                        <div class="row g-4">
 
-                            
 
-                            <div class="col-md-6">
+                        <div class="card-body p-4">
 
-                                <label for="team_name"
-                                       class="form-label fw-semibold">
+                            <form method="POST" action="{{ route('team.store') }}">
 
-                                    Team Name
+                                @csrf
 
-                                </label>
+                                <div class="row g-4">
 
-                                <div class="input-group">
 
-                                    <span class="input-group-text">
 
-                                        <i class="bi bi-diagram-3"></i>
+                                    <div class="col-md-6">
 
-                                    </span>
+                                        <label for="team_name"
+                                            class="form-label fw-semibold">
 
-                                    <input type="text"
-                                           class="form-control"
-                                           id="team_name"
-                                           name="team_name"
-                                           placeholder="Enter Team Name"
-                                           required>
+                                            Team Name
 
-                                </div>
+                                        </label>
 
-                            </div>
+                                        <div class="input-group">
 
-                            
+                                            <span class="input-group-text">
 
-                            <div class="col-md-6">
+                                                <i class="bi bi-diagram-3"></i>
 
-                                <label for="team_leader"
-                                       class="form-label fw-semibold">
+                                            </span>
 
-                                    Team Leader
+                                            <input type="text"
+                                                class="form-control"
+                                                id="team_name"
+                                                name="team_name"
+                                                placeholder="Enter Team Name"
+                                                required>
 
-                                </label>
+                                        </div>
 
-                                <div class="input-group">
+                                    </div>
 
-                                    <span class="input-group-text">
 
-                                        <i class="bi bi-person-badge"></i>
 
-                                    </span>
+                                    <div class="col-md-6">
 
-                                    <select class="form-select"
-                                            id="team_leader"
-                                            name="team_leader"
-                                            required>
+                                        <label for="team_leader"
+                                            class="form-label fw-semibold">
 
-                                        <option value="">
-                                            Select Team Leader
-                                        </option>
+                                            Team Leader
 
-                                        @foreach($users as $user)
+                                        </label>
 
-                                            <option value="{{ $user->id }}">
+                                        <div class="input-group">
 
-                                                {{ $user->name }}
+                                            <span class="input-group-text">
 
-                                            </option>
+                                                <i class="bi bi-person-badge"></i>
 
-                                        @endforeach
+                                            </span>
 
-                                    </select>
+                                            <select class="form-select"
+                                                id="team_leader"
+                                                name="team_leader"
+                                                required>
 
-                                </div>
+                                                <option value="">
+                                                    Select Team Leader
+                                                </option>
 
-                            </div>
+                                                @foreach($users as $user)
 
-                            
+                                                <option value="{{ $user->id }}">
 
-                            <div class="col-12">
+                                                    {{ $user->name }}
 
-                                <label for="description"
-                                       class="form-label fw-semibold">
+                                                </option>
 
-                                    Team Description
+                                                @endforeach
 
-                                </label>
+                                            </select>
 
-                                <textarea class="form-control"
-                                          id="description"
-                                          name="description"
-                                          rows="4"
-                                          placeholder="Enter team description..."></textarea>
+                                        </div>
 
-                            </div>
+                                    </div>
 
-                            
 
-                            <div class="col-12">
 
-                                <label for="members"
-                                       class="form-label fw-semibold">
+                                    <div class="col-12">
 
-                                    Select Team Members
+                                        <label for="description"
+                                            class="form-label fw-semibold">
 
-                                </label>
+                                            Team Description
 
-                                <select class="form-select"
+                                        </label>
+
+                                        <textarea class="form-control"
+                                            id="description"
+                                            name="description"
+                                            rows="4"
+                                            placeholder="Enter team description..."></textarea>
+
+                                    </div>
+
+
+
+                                   
+                                        <div class="col-12">
+
+                                            <label class="form-label fw-semibold">
+                                                Select Team Members
+                                            </label>
+
+                                            <div class="border rounded-3 p-3" style="max-height: 250px; overflow-y: auto;">
+
+                                                @foreach($users as $user)
+
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input"
+                                                        type="checkbox"
+                                                        name="agents[]"
+                                                        value="{{ $user->id }}"
+                                                        id="user_{{ $user->id }}">
+
+                                                    <label class="form-check-label" for="user_{{ $user->id }}">
+                                                        {{ $user->name }}
+                                                    </label>
+                                                </div>
+
+                                                @endforeach
+
+                                            </div>
+
+                                            <small class="text-muted">
+                                                Tick users to add them as team members.
+                                            </small>
+
+                                        </div>
+
+                                        <!-- <select class="form-select"
                                         id="members"
                                         name="agents[]"
                                         multiple
@@ -186,47 +211,48 @@
 
                                     Hold Ctrl (Windows) or Cmd (Mac) to select multiple users.
 
-                                </small>
+                                </small> -->
 
-                            </div>
+                                    </div>
+
+                                </div>
+
+
+
+                                <div class="d-flex justify-content-end gap-2 mt-5">
+
+                                    <button type="reset"
+                                        class="btn btn-light border px-4">
+
+                                        Cancel
+
+                                    </button>
+
+                                    <button type="submit"
+                                        class="btn btn-primary px-4 shadow-sm">
+
+                                        <i class="bi bi-check-circle me-1"></i>
+
+                                        Create Team
+
+                                    </button>
+
+                                </div>
+
+                            </form>
 
                         </div>
 
-                       
-
-                        <div class="d-flex justify-content-end gap-2 mt-5">
-
-                            <button type="reset"
-                                    class="btn btn-light border px-4">
-
-                                Cancel
-
-                            </button>
-
-                            <button type="submit"
-                                    class="btn btn-primary px-4 shadow-sm">
-
-                                <i class="bi bi-check-circle me-1"></i>
-
-                                Create Team
-
-                            </button>
-
-                        </div>
-
-                    </form>
+                    </div>
 
                 </div>
 
             </div>
 
         </div>
+    </body>
 
-    </div>
-
-</div>
-</body>
-</html>
+    </html>
 
 
 </div>

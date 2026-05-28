@@ -1,3 +1,6 @@
+@extends('navbar')
+@section('title','CustomerReport')
+@section('content')
 <!DOCTYPE html>
 <html>
 <head>
@@ -67,3 +70,4 @@
 
 </body>
 </html>
+@endsection

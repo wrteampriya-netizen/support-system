@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SignupController;
 use Illuminate\Support\Facades\Password;
-
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Hash;
@@ -17,6 +17,7 @@ use App\Http\Controllers\agentController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChattestController;
 use App\Http\Controllers\messageController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 
@@ -95,6 +96,32 @@ Route::post('/role/user/{id}', [RoleController::class, 'role_assign'])->name('ro
 });//middle complete
 
 
+//report
+
+Route::get('/reports/tickets',[ReportController::class,'ticketReport'])->name('report.tickets');
+
+Route::get('/reports/agent',[ReportController::class,'agentReport'])->name('report.agent');
+
+Route::get('/reports/agentsla',[ReportController::class,'SlaReport'])->name('report.agentsla');
+
+Route::get('/reports/customer',[ReportController::class,'cutomerReport'])->name('report.customer');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Route::get('/notification/open/{id}', [NotificationController::class, 'open'])->name('notification.open');
 
 Route::get('/ticket/assign',[Team_leaderController::class,'showform'])->name('ticket.showform');
 
@@ -146,7 +173,7 @@ Route::delete('/ticket/{id}', [TeamCreateCntroller::class, 'deleteTicket'])->nam
 Route::get('/admin/dashboard',[TeamCreateCntroller::class,'ticketCount'])->name('admin.dashboard')->middleware(['auth', 'verified']);
 
 //team leader
-Route::get('/notification/open/{id}', [Team_leaderController::class, 'openNotification'])->name('notification.open');
+// Route::get('/notification/open/{id}', [Team_leaderController::class, 'openNotification'])->name('notification.open');
 
 Route::get('/teamLeader/assign',[Team_leaderController::class,'index'])->name('teamLeader.showpage');
 
@@ -169,6 +196,7 @@ Route::post('/leader/tickets/{id}/status', [Team_leaderController::class, 'updat
 Route::delete('/ticket/delete/{id}', [TeamCreateCntroller::class, 'deleteTicket'])->name('ticket_leader.delete');
 
 //agent
+Route::post('/agent/status/{id}', [agentController::class, 'updateStatus'])->name('agent.status.update');
 
 Route::get('/agent/assign',[agentController::class,'index'])->name('agent.showpage');
 Route::get('/agent/accept/{id}',[agentController::class,'accept'])->name('agent.accept');
@@ -196,6 +224,8 @@ Route::post('/chat/send', [messageController::class, 'sendmsg'])
     ->name('chats.send');
 Route::view('navbar','navbar');
 
+
+Route::post('/ticket/close/{id}', [agentController::class, 'close'])->name('ticket.close');
 
 
 
@@ -254,6 +284,7 @@ Route::post('/permission/delete/{id}', [PermissionController::class, 'destroy'])
 | Roles
 |--------------------------------------------------------------------------
 */
+Route::get('/user', [RoleController::class, 'User_data'])->name('role.data');
 Route::get('/role/create', [RoleController::class, 'showRole'])->name('role.show');
 Route::post('/role/create', [RoleController::class, 'store'])->name('role.create');
 
@@ -266,6 +297,6 @@ Route::post('/role/update/{id}', [RoleController::class, 'update'])->name('role.
 
 Route::post('/role/delete/{id}', [RoleController::class, 'destory'])->name('role.destroy');
 
-Route::get('/user', [RoleController::class, 'User_data'])->name('role.data');
+// Route::get('/user', [RoleController::class, 'User_data'])->name('role.data');
 
 Route::post('/role/user/{id}', [RoleController::class, 'role_assign'])->name('role.user');
